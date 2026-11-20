@@ -1,0 +1,70 @@
+name: Publish production website
+run-name: Promote ${{ inputs.candidate_tag }} to production
+# Step two of two. Step one happens in smartgalati/devcapsule-www-smartgalati-ro: every change is
+# built, checked and published to the test site, and saved as a "website candidate" release.
+# This workflow takes one reviewed candidate, by tag, and publishes those same files here.
+# It never rebuilds the site. See README.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_tag:
+        description: 'Candidate release tag from the test repository: website-candidate-RUN-ATTEMPT'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - name: Read the production address (fails here until Pages is enabled for this repository)
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Require a custom domain
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          if [ -n "$BASE_PATH" ]; then
+            echo "::error::This repository's Pages site has no custom domain (base path $BASE_PATH). Set it in Settings → Pages; a candidate can only be promoted to the root of a domain."
+            exit 1
+          fi
+      - name: Download and verify the candidate, then prepare production
+        env:
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+          PRODUCTION_ORIGIN: ${{ steps.pages.outputs.origin }}
+        run: node scripts/promote.mjs _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to production
+        id: deployment
+        uses: actions/deploy-pages@v4

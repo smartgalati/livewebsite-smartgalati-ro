@@ -1,0 +1,10 @@
+{
+  "name": "smartgalati-production-site",
+  "private": true,
+  "type": "module",
+  "description": "Promotes a tested website candidate to the ACS Smart Galați production site",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
