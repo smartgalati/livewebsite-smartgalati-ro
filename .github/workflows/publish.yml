@@ -49,8 +49,11 @@ jobs:
       - name: Download and verify the candidate, then prepare production
         env:
           CANDIDATE_TAG: ${{ inputs.candidate_tag }}
-          PRODUCTION_ORIGIN: ${{ steps.pages.outputs.origin }}
-        run: node scripts/promote.mjs _site
+          PAGES_ORIGIN: ${{ steps.pages.outputs.origin }}
+        # Pages reports http:// until "Enforce HTTPS" is ticked, which GitHub only
+        # allows after the certificate is issued. Production is always published
+        # for https://, so the first publish does not have to wait for that.
+        run: PRODUCTION_ORIGIN="https://${PAGES_ORIGIN#*://}" node scripts/promote.mjs _site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

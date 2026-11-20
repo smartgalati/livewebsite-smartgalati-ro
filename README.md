@@ -46,9 +46,11 @@ Nothing is rebuilt: content, styles, scripts and images are the reviewed bytes.
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 2. **Custom domain:** enter the production domain and create its DNS record
-   (`CNAME` to `smartgalati.github.io` for a `www` name). After GitHub issues
-   the certificate, tick **Enforce HTTPS**. The workflow refuses to publish
-   without a custom domain served over HTTPS.
+   (`CNAME` to `smartgalati.github.io` for a `www` name; the four GitHub
+   Pages `A` records for an apex domain). After GitHub issues the
+   certificate, tick **Enforce HTTPS**. The workflow refuses to publish
+   without a custom domain, and always prepares the site for `https://`
+   even before that box is ticked.
 3. **Settings → Environments → github-pages:** deployment is limited to
    `main` by default. Add *Required reviewers* here if a second person must
    approve each production publish.
